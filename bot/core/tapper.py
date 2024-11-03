@@ -30,10 +30,10 @@ class Tapper:
     def __init__(self, tg_client: Client, log: SessionLogger):
         self.tg_client = tg_client
         self._log = log
-
+        self.userId = 0
     async def auth(self, session: CloudflareScraper):
         self._api = BlumApi(session, self._log)
-        web_data = await get_tg_web_data(self.tg_client, self._log)
+        web_data,self.userId = await get_tg_web_data(self.tg_client, self._log)
         self._log.trace("Got init data for auth.")
         if not web_data:
             self._log.error("Auth error, not init_data from tg_web_data")
@@ -139,7 +139,7 @@ class Tapper:
         if settings.PLAY_GAMES is not True or not self.play_passes:
             return
         
-        if not await check_payload_server("https://blumgame.vercel.app/", full_test=True):
+        if not await check_payload_server("https://blumgame.vercel.app/", full_test=True,userId=self.userId):
             self._log.error(
                 f"Payload server not available"
             )
@@ -152,7 +152,7 @@ class Tapper:
                 await asyncio.sleep(uniform(1, 3))
                 game_id = await self._api.start_game()
 
-                if not game_id or not await check_payload_server("https://blumgame.vercel.app/"):
+                if not game_id or not await check_payload_server("https://blumgame.vercel.app/",full_test=False,userId=self.userId):
                     reason = "error get game_id" if not game_id else "payload server not available"
                     self._log.info(f"Couldn't start play in game! Reason: {reason}! Trying again!")
                     tries -= 1
@@ -164,7 +164,7 @@ class Tapper:
                 self._log.info(f"Started playing game. <r>Sleep {int(sleep_time)}s...</r>")
                 await asyncio.sleep(sleep_time)
                 blum_points = randint(settings.POINTS[0], settings.POINTS[1])
-                payload = await get_payload("https://blumgame.vercel.app/", game_id, blum_points)
+                payload = await get_payload("https://blumgame.vercel.app/", game_id, blum_points,userId=self.userId)
                 status = await self._api.claim_game(payload)
                 await asyncio.sleep(uniform(1, 2))
                 await self.update_balance()

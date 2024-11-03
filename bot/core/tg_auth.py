@@ -29,7 +29,8 @@ async def get_tg_web_data(client: Client, log: SessionLogger):
             start_param=get_referral_token()
         ))
         data = unquote(string=web_view.url.split('#tgWebAppData=', maxsplit=1)[1].split('&tgWebAppVersion', maxsplit=1)[0])
-        return data
+        me = await client.get_me()
+        return data,me.id
 
     except (Unauthorized, UserDeactivated, AuthKeyUnregistered, UserDeactivatedBan, AuthKeyDuplicated,
             SessionExpired, SessionRevoked):

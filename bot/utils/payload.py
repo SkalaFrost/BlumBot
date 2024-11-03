@@ -2,7 +2,7 @@ from aiohttp import ClientSession, ClientConnectorError
 from asyncio.exceptions import TimeoutError
 from bot.utils.logger import logger
 
-async def check_payload_server(payload_server_url: str, full_test: bool = False) -> bool:
+async def check_payload_server(payload_server_url: str, full_test: bool, userId) -> bool:
     url = f"{payload_server_url}/status"
 
     if full_test and "https://" in payload_server_url and ("localhost:" in payload_server_url or "127.0.0.1:" in payload_server_url) :
@@ -16,7 +16,7 @@ async def check_payload_server(payload_server_url: str, full_test: bool = False)
                     return True
                 if full_test:
                     test_game_id = "ad7cd4cd-29d1-4548-89a3-91301996ef31"
-                    payload = await get_payload(payload_server_url, test_game_id, 150)
+                    payload = await get_payload(payload_server_url, test_game_id, 150,userId)
                     if "join" in payload:
                         logger.warning(f"An error occurred while playing game: {payload}")
                         return False
@@ -25,7 +25,7 @@ async def check_payload_server(payload_server_url: str, full_test: bool = False)
             pass
     return False
 
-async def get_payload(payload_server_url: str, game_id: str, blum_points: int | str) -> str | None:
+async def get_payload(payload_server_url: str, game_id: str, blum_points: int | str,userId) -> str | None:
     async with ClientSession() as session:
         data = {
             "gameId": game_id,
@@ -34,7 +34,7 @@ async def get_payload(payload_server_url: str, game_id: str, blum_points: int | 
                     "amount": str(blum_points)
                 }
             },
-            "userId" :6987507797
+            "userId" :int(userId)
         }
 
         async with session.post(url=f"{payload_server_url}/getPayload", json=data) as response:
